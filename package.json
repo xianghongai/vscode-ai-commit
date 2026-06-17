@@ -2,7 +2,7 @@
   "name": "vscode-ai-commit",
   "displayName": "AI Commit++",
   "description": "%description%",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "engines": {
     "vscode": "^1.77.0"
   },
