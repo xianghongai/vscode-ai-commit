@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as vscode from 'vscode';
+import { sanitizeCommitMessage } from './commit-message';
 import { getDiffStaged } from './git-utils';
 import { I18n } from './i18n';
 import { getMainCommitPrompt } from './prompts';
@@ -108,7 +109,7 @@ export async function generateCommitMsg(arg: unknown): Promise<void> {
           ? I18n.t('progress.generatingCommitMessageWithContext')
           : I18n.t('progress.generatingCommitMessage'),
       });
-      const commitMessage = await client.chat(messages, { signal: cancellation.signal });
+      const commitMessage = sanitizeCommitMessage(await client.chat(messages, { signal: cancellation.signal }));
       if (token.isCancellationRequested) {
         throw new vscode.CancellationError();
       }

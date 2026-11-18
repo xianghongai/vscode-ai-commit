@@ -105,6 +105,18 @@ Set temperature to a relatively low value (0.2 to 0.5) for more stable and conci
 
 `apiKey` accepts a plaintext key/token or an environment-variable reference using `${env:VARIABLE_NAME}` [^1]. The environment variable must be available to the VS Code Extension Host. Completely quit and restart VS Code after changing it.
 
+### Custom request headers
+
+`headers` adds custom HTTP headers to provider requests. Values are literal strings and do not support `${env:...}` interpolation. If a header value needs a stable session ID, set the value to exactly `{{SESSION_ID}}`:
+
+```json
+"headers": {
+  "<HEADER_NAME>": "{{SESSION_ID}}"
+}
+```
+
+The extension generates the UUID once per VS Code window (extension host) and reuses it for that window. Reloading the window or restarting VS Code generates a new value. The placeholder must be the entire header value; values such as `{{session_id}}`, `prefix-{{SESSION_ID}}`, or values with surrounding whitespace are sent literally.
+
 ## Credits
 
 - <https://github.com/sitoi/ai-commit>

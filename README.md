@@ -107,6 +107,18 @@
 
 `apiKey` 可直接填写明文 Key/Token，也可使用 `${env:VARIABLE_NAME}` [^1] 语法引用环境变量。环境变量必须存在于 VS Code Extension Host 的运行环境中；修改后请完全退出并重新启动 VS Code。
 
+### 自定义请求头
+
+`headers` 用于为 Provider 请求附加自定义 HTTP 请求头，值按字面量处理，不支持 `${env:...}` 插值。若某个请求头的值需要稳定的会话 ID，可将该值完整写为 `{{SESSION_ID}}`：
+
+```json
+"headers": {
+  "<HEADER_NAME>": "{{SESSION_ID}}"
+}
+```
+
+扩展会在每个 VS Code 窗口的 Extension Host 中生成一次 UUID，并在该窗口内复用；重新加载窗口或重启 VS Code 后会生成新的值。占位符必须作为请求头值的完整内容，`{{session_id}}`、`prefix-{{SESSION_ID}}` 或前后带空白的写法都会按原样发送。
+
 ## Credits
 
 - <https://github.com/sitoi/ai-commit>

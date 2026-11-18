@@ -191,6 +191,7 @@
               },
               "headers": {
                 "type": "object",
+                "markdownDescription": "%config.providers.headers.markdown%",
                 "additionalProperties": {
                   "type": "string"
                 }

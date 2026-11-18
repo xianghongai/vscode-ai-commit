@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type {
   BaseProviderConfig,
   ChatGenerationParams,
@@ -13,6 +14,9 @@ type AzureOpenAISettingsEntry = Extract<ProviderSettingsEntry, { type: 'azure-op
 type GeminiSettingsEntry = Extract<ProviderSettingsEntry, { type: 'gemini' }>;
 
 const ENVIRONMENT_API_KEY_PATTERN = /^\$\{env:([A-Za-z_][A-Za-z0-9_]*)\}$/;
+const SESSION_ID_HEADER_PLACEHOLDER = '{{SESSION_ID}}';
+
+let providerSessionId: string | undefined;
 
 /** 保留环境变量名以便 Registry 生成本地化错误，不暴露密钥值。 */
 export class ProviderApiKeyEnvironmentVariableError extends Error {
@@ -184,6 +188,12 @@ function parseOllamaConfig(record: ConfigRecord, base: Omit<BaseProviderConfig, 
   };
 }
 
+/** 每个 Extension Host 进程只生成一次，保证重复解析 settings 时请求头值稳定。 */
+function getProviderSessionId(): string {
+  providerSessionId ??= randomUUID();
+  return providerSessionId;
+}
+
 function parseHeadersProperty(record: ConfigRecord, index: number): Pick<BaseProviderConfig, 'headers'> {
   const value = record.headers;
   if (value === undefined) {
@@ -195,7 +205,7 @@ function parseHeadersProperty(record: ConfigRecord, index: number): Pick<BasePro
     if (typeof headerValue !== 'string') {
       throw new Error(`[ai-commit] providers[${index}].headers.${name} must be a string`);
     }
-    parsedHeaders[name] = headerValue;
+    parsedHeaders[name] = headerValue === SESSION_ID_HEADER_PLACEHOLDER ? getProviderSessionId() : headerValue;
   }
   return { headers: parsedHeaders };
 }

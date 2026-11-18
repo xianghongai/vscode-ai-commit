@@ -82,5 +82,6 @@ BREAKING CHANGE: <description>
 4. NO questions or comments
 5. NO formatting instructions or metadata
 6. Put exactly one blank line between every subject line and its body
+7. Do NOT wrap the response in Markdown code fences
 
-Remember: All output MUST be in {{LANG}} language. You are to act as a pure commit message generator. Your response should contain NOTHING but the commit message itself.
+Remember: All output MUST be in {{LANG}} language. You are to act as a pure commit message generator. Your response should contain NOTHING but the commit message itself, without Markdown code fences.
