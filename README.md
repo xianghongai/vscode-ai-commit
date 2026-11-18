@@ -103,6 +103,8 @@
 }
 ```
 
+`ai-commit.commitLanguage` 设为 `"Auto"` 时，扩展会读取目标仓库最近最多 200 条非合并提交，排除依赖机器人后按主要语言生成；多根工作区按实际执行命令的仓库分别检测。历史为空、无法识别或结果不明确时回退到 English；显式语言值的行为不变。
+
 建议将 temperature 设置为较低值（0.2 至 0.5），以获得更稳定、更简洁的提交消息。
 
 `apiKey` 可直接填写明文 Key/Token，也可使用 `${env:VARIABLE_NAME}` [^1] 语法引用环境变量。环境变量必须存在于 VS Code Extension Host 的运行环境中；修改后请完全退出并重新启动 VS Code。

@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { ConfigKeys, ConfigurationManager } from './config';
+import { AUTO_COMMIT_LANGUAGE, DEFAULT_COMMIT_LANGUAGE } from './commit-language';
 import { I18n } from './i18n';
 import { getErrorMessage } from './providers/shared';
 import type { ChatMessage } from './providers/types';
@@ -55,11 +55,11 @@ function expandPath(value: string): string {
   return expandedEnvironment;
 }
 
-/** 返回带语言约束的 system 消息。 */
-export async function getMainCommitPrompt(): Promise<ChatMessage[]> {
-  const language =
-    ConfigurationManager.getInstance().getConfig<string>(ConfigKeys.COMMIT_LANGUAGE, 'English') ?? 'English';
-  const base = loadMainPrompt().replace(/\{\{LANG\}\}/g, language);
-  const supplement = `\n\nRemember: All output MUST be in ${language} language. Your response must contain NOTHING but the commit message itself.`;
+/** 返回带语言约束的 system 消息；language 必须是已解析的具体语言，不能是 Auto。 */
+export async function getMainCommitPrompt(language: string): Promise<ChatMessage[]> {
+  const resolvedLanguage =
+    language === AUTO_COMMIT_LANGUAGE || language.trim() === '' ? DEFAULT_COMMIT_LANGUAGE : language;
+  const base = loadMainPrompt().replace(/\{\{LANG\}\}/g, resolvedLanguage);
+  const supplement = `\n\nRemember: All output MUST be in ${resolvedLanguage} language. Your response must contain NOTHING but the commit message itself.`;
   return [{ role: 'system', content: `${base}${supplement}` }];
 }

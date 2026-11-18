@@ -1,7 +1,9 @@
 import * as fs from 'node:fs';
 import * as vscode from 'vscode';
+import { AUTO_COMMIT_LANGUAGE, DEFAULT_COMMIT_LANGUAGE, resolveCommitLanguage } from './commit-language';
 import { sanitizeCommitMessage } from './commit-message';
-import { getDiffStaged } from './git-utils';
+import { ConfigKeys, ConfigurationManager } from './config';
+import { getDiffStaged, getRecentCommitSubjects } from './git-utils';
 import { I18n } from './i18n';
 import { getMainCommitPrompt } from './prompts';
 import { createClient } from './providers/factory';
@@ -35,9 +37,10 @@ interface RepositoryCommandArgument {
 /** 生成模型所需消息，并保留 SCM 输入框中的附加上下文。 */
 export async function generateCommitMessageChatCompletionPrompt(
   diff: string,
+  language: string,
   additionalContext?: string
 ): Promise<ChatMessage[]> {
-  const messages = await getMainCommitPrompt();
+  const messages = await getMainCommitPrompt(language);
   if (additionalContext) {
     messages.push({
       role: 'user',
@@ -97,12 +100,22 @@ export async function generateCommitMsg(arg: unknown): Promise<void> {
       }
 
       const additionalContext = repo.inputBox.value.trim();
+      const configuredLanguage =
+        ConfigurationManager.getInstance().getConfig<string>(ConfigKeys.COMMIT_LANGUAGE, DEFAULT_COMMIT_LANGUAGE) ??
+        DEFAULT_COMMIT_LANGUAGE;
+
+      let commitLanguage = configuredLanguage;
+      if (configuredLanguage === AUTO_COMMIT_LANGUAGE) {
+        progress.report({ message: I18n.t('progress.detectingCommitLanguage') });
+        commitLanguage = resolveCommitLanguage(configuredLanguage, await getRecentCommitSubjects(repo));
+      }
+
       progress.report({
         message: additionalContext
           ? I18n.t('progress.analyzingChangesWithContext')
           : I18n.t('progress.analyzingChanges'),
       });
-      const messages = await generateCommitMessageChatCompletionPrompt(diff, additionalContext);
+      const messages = await generateCommitMessageChatCompletionPrompt(diff, commitLanguage, additionalContext);
 
       progress.report({
         message: additionalContext

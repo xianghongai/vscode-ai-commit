@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.12.0",
+    "franc-min": "^6.2.0",
     "openai": "^4.14.2",
     "simple-git": "^3.17.0"
   },
@@ -96,6 +97,7 @@
           "description": "%config.language.description%",
           "markdownDescription": "%config.language.markdown%",
           "enum": [
+            "Auto",
             "Simplified Chinese",
             "Traditional Chinese",
             "Japanese",
@@ -117,6 +119,7 @@
             "Thai"
           ],
           "enumDescriptions": [
+            "%config.language.auto%",
             "简体中文",
             "繁體中文",
             "にほんご",
