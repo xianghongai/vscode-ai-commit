@@ -8,7 +8,8 @@ interface GitDiffRepository {
   };
 }
 
-const DEFAULT_COMMIT_SAMPLE_SIZE = 200;
+/** Recent commits reflect the repository's current writing language; scanning deep history adds noise. */
+const DEFAULT_COMMIT_SAMPLE_SIZE = 5;
 /** Author names used by common dependency-update bots and GitHub Apps. */
 const BOT_AUTHOR_PATTERN = /dependabot|renovate|github-actions|\[bot\]/i;
 

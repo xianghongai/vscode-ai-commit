@@ -5,6 +5,7 @@ import {
   DEFAULT_COMMIT_LANGUAGE,
   detectCommitLanguage,
   resolveCommitLanguage,
+  resolveCommitLanguageForRepository,
 } from '@/commit-language';
 
 const ENGLISH = [
@@ -129,4 +130,45 @@ test('resolves Auto and falls back to English', () => {
   assert.equal(resolveCommitLanguage(AUTO_COMMIT_LANGUAGE, []), DEFAULT_COMMIT_LANGUAGE);
   assert.equal(resolveCommitLanguage(AUTO_COMMIT_LANGUAGE, ['feat(api):']), DEFAULT_COMMIT_LANGUAGE);
   assert.equal(resolveCommitLanguage(AUTO_COMMIT_LANGUAGE, [JAPANESE[0]]), DEFAULT_COMMIT_LANGUAGE);
+});
+
+test('samples repository history only once per detection result', async () => {
+  let samples = 0;
+  const loadSubjects = async () => {
+    samples += 1;
+    return SIMPLIFIED_CHINESE;
+  };
+
+  const first = await resolveCommitLanguageForRepository('/repo/cached', AUTO_COMMIT_LANGUAGE, loadSubjects);
+  const second = await resolveCommitLanguageForRepository('/repo/cached', AUTO_COMMIT_LANGUAGE, loadSubjects);
+
+  assert.equal(first, 'Simplified Chinese');
+  assert.equal(second, 'Simplified Chinese');
+  assert.equal(samples, 1);
+});
+
+test('retries inconclusive samples instead of caching the fallback', async () => {
+  let samples = 0;
+  const loadSubjects = async () => {
+    samples += 1;
+    return ['feat(api):'];
+  };
+
+  const first = await resolveCommitLanguageForRepository('/repo/inconclusive', AUTO_COMMIT_LANGUAGE, loadSubjects);
+  const second = await resolveCommitLanguageForRepository('/repo/inconclusive', AUTO_COMMIT_LANGUAGE, loadSubjects);
+
+  assert.equal(first, DEFAULT_COMMIT_LANGUAGE);
+  assert.equal(second, DEFAULT_COMMIT_LANGUAGE);
+  assert.equal(samples, 2);
+});
+
+test('skips history sampling for explicit language values', async () => {
+  let samples = 0;
+  const language = await resolveCommitLanguageForRepository('/repo/explicit', 'German', async () => {
+    samples += 1;
+    return SIMPLIFIED_CHINESE;
+  });
+
+  assert.equal(language, 'German');
+  assert.equal(samples, 0);
 });

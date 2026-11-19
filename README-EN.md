@@ -101,7 +101,7 @@ Adhere to the [Conventional Commits specification](https://www.conventionalcommi
 }
 ```
 
-When `ai-commit.commitLanguage` is set to `"Auto"`, the extension samples up to 200 recent non-merge commits from the target repository, ignores dependency-bot commits, and uses the dominant language. In multi-root workspaces, detection runs per target repository. If the history is empty, undetectable, or inconclusive, it falls back to English. Explicit language values behave as before.
+When `ai-commit.commitLanguage` is set to `"Auto"`, the extension samples up to 5 recent non-merge commits from the target repository, ignores dependency-bot commits, and uses the dominant language. Conclusive results are cached per repository, so later generations do not repeat the detection. In multi-root workspaces, detection runs per target repository. If the history is empty, undetectable, or inconclusive, it falls back to English. Explicit language values behave as before.
 
 Set temperature to a relatively low value (0.2 to 0.5) for more stable and concise commit messages.
 

@@ -329,6 +329,37 @@ export function resolveCommitLanguage(configured: string, subjects: readonly str
   return detectCommitLanguage(subjects) ?? DEFAULT_COMMIT_LANGUAGE;
 }
 
+/** Auto-mode detections keyed by repository root; one repo only needs to be sampled once. */
+const autoLanguageCache = new Map<string, string>();
+
+/**
+ * Resolve the configured language for a repository. Auto detection is cached per
+ * repository; inconclusive samples are not cached so young repositories are
+ * re-checked on the next invocation.
+ */
+export async function resolveCommitLanguageForRepository(
+  repositoryPath: string,
+  configured: string,
+  loadSubjects: () => Promise<readonly string[]>
+): Promise<string> {
+  if (configured !== AUTO_COMMIT_LANGUAGE) {
+    return configured;
+  }
+
+  const cached = autoLanguageCache.get(repositoryPath);
+  if (cached) {
+    return cached;
+  }
+
+  const detected = detectCommitLanguage(await loadSubjects());
+  if (!detected) {
+    return DEFAULT_COMMIT_LANGUAGE;
+  }
+
+  autoLanguageCache.set(repositoryPath, detected);
+  return detected;
+}
+
 function detectCode(text: string): string | undefined {
   // Kana/Hangul are deterministic; this also prevents Latin-heavy prefixes from
   // winning franc's script race.

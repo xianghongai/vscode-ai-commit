@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as vscode from 'vscode';
-import { AUTO_COMMIT_LANGUAGE, DEFAULT_COMMIT_LANGUAGE, resolveCommitLanguage } from './commit-language';
+import { AUTO_COMMIT_LANGUAGE, DEFAULT_COMMIT_LANGUAGE, resolveCommitLanguageForRepository } from './commit-language';
 import { sanitizeCommitMessage } from './commit-message';
 import { ConfigKeys, ConfigurationManager } from './config';
 import { getDiffStaged, getRecentCommitSubjects } from './git-utils';
@@ -107,7 +107,9 @@ export async function generateCommitMsg(arg: unknown): Promise<void> {
       let commitLanguage = configuredLanguage;
       if (configuredLanguage === AUTO_COMMIT_LANGUAGE) {
         progress.report({ message: I18n.t('progress.detectingCommitLanguage') });
-        commitLanguage = resolveCommitLanguage(configuredLanguage, await getRecentCommitSubjects(repo));
+        commitLanguage = await resolveCommitLanguageForRepository(repo.rootUri.fsPath, configuredLanguage, () =>
+          getRecentCommitSubjects(repo)
+        );
       }
 
       progress.report({
