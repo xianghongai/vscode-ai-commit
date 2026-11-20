@@ -3,7 +3,12 @@ import { franc } from 'franc-min';
 export const AUTO_COMMIT_LANGUAGE = 'Auto';
 export const DEFAULT_COMMIT_LANGUAGE = 'English';
 
-/** franc ISO 639-3 codes restricted to the languages exposed by ai-commit.commitLanguage. */
+/**
+ * franc ISO 639-3 codes restricted to the languages exposed by ai-commit.commitLanguage.
+ * `only` filters candidates instead of rejecting other languages: text in an unsupported language
+ * is mapped to the closest supported one (Ukrainian is reported as rus), so such repositories can
+ * accumulate systematic wrong votes rather than abstaining.
+ */
 const FRANC_LANGUAGE_CODES: string[] = [
   'cmn',
   'jpn',
@@ -51,9 +56,14 @@ const FRANC_TO_LANGUAGE: Record<string, string> = {
   zlm: 'Bahasa',
 };
 
-/** At least three detected subjects must agree on the winner. */
+/**
+ * At least three detected subjects must agree on the winner. Per-subject detection is noisy:
+ * short Latin subjects are easily misclassified and unsupported languages never abstain, so one
+ * or two agreeing votes would make the result a coin flip. Combined with the default ten-subject
+ * sample, this tolerates several undetected or misclassified subjects.
+ */
 const MIN_VOTES = 3;
-/** The winner must also hold at least half of all detected votes. */
+/** The winner must also hold at least half of all detected votes, so split votes stay undecided. */
 const MIN_WINNER_SHARE = 0.5;
 
 const KANA_PATTERN = /[\p{Script=Hiragana}\p{Script=Katakana}]/u;
@@ -273,7 +283,11 @@ const VARIANT_PAIRS: readonly VariantPair[] = [
 const SIMPLIFIED_MARKERS = new Set(VARIANT_PAIRS.map(([simplified]) => simplified));
 const TRADITIONAL_MARKERS = new Set(VARIANT_PAIRS.flatMap(([, traditional]) => traditional));
 
-/** Detect the dominant language from commit subjects; undefined means low confidence. */
+/**
+ * Detect the dominant language from commit subjects; undefined means low confidence.
+ * Repositories with genuinely mixed writing styles are expected to stay undecided instead of
+ * guessing from a bare plurality.
+ */
 export function detectCommitLanguage(subjects: readonly string[]): string | undefined {
   const votes = new Map<string, number>();
   const chineseTexts: string[] = [];
@@ -370,6 +384,9 @@ function detectCode(text: string): string | undefined {
     return 'kor';
   }
 
+  // Texts below franc's minLength produce 'und' and cast no vote; stripping the conventional
+  // prefix often pushes short subjects (e.g. "bump deps") below the threshold. Dense scripts
+  // stay detectable at two characters, so CJK/Thai/Cyrillic subjects vote even when terse.
   const code = franc(text, {
     only: FRANC_LANGUAGE_CODES,
     minLength: DENSE_SCRIPT_PATTERN.test(text) ? 2 : 10,

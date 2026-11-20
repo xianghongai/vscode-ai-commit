@@ -8,8 +8,15 @@ interface GitDiffRepository {
   };
 }
 
-/** Recent commits reflect the repository's current writing language; scanning deep history adds noise. */
-const DEFAULT_COMMIT_SAMPLE_SIZE = 5;
+/**
+ * Recent commits reflect the repository's current writing language; scanning deep history adds noise.
+ *
+ * The window can only vote with subjects it manages to classify, and bot authors are filtered out
+ * below, so the effective sample is often smaller than this limit. Ten keeps enough margin above
+ * the three-vote floor to absorb undetected or misclassified subjects, while a repository that
+ * switches language converges within roughly half the window instead of carrying stale commits.
+ */
+const DEFAULT_COMMIT_SAMPLE_SIZE = 10;
 /** Author names used by common dependency-update bots and GitHub Apps. */
 const BOT_AUTHOR_PATTERN = /dependabot|renovate|github-actions|\[bot\]/i;
 
